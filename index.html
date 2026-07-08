@@ -57,7 +57,7 @@ relays (kind 0 profile, kind 10002 relay list):</p>
       return
     }
     meta.textContent = 'resolving ' + didFromPubkey(pubkey) + ' …'
-    const { document: doc, profile, source } = await resolve(pubkey, { pool: defaultPool() })
+    const { document: doc, profile, source } = await resolve(pubkey, { pool: defaultPool(), wellKnown: false })
     if (mySeq !== seq) return
     meta.textContent = 'source: ' + source + (profile?.name ? ' · profile: ' + profile.name : '')
     out.textContent = JSON.stringify(doc, null, 2)
