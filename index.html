@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>did — did:nostr resolver demo</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.4rem; } h1 a { text-decoration: none; }
+  code, pre { background: rgba(127,127,127,.12); border-radius: 4px; padding: .1em .3em; }
+  pre { padding: .75em; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+  input { font: inherit; width: 100%; padding: .5em; border-radius: 8px; box-sizing: border-box;
+    border: 1px solid rgba(127,127,127,.4); background: transparent; color: inherit;
+    font-family: ui-monospace, monospace; }
+  #meta { font-size: .85rem; opacity: .7; }
+</style>
+</head>
+<body>
+<h1><a href="https://github.com/nostr-client/did">nostr-client / did</a></h1>
+<p>A nostr public key <em>is</em> a <a href="https://did-nostr.com/">did:nostr</a>
+identifier. Paste a hex pubkey, <code>npub…</code>, or <code>did:nostr:…</code>
+and resolve it — offline document derived from the key, enhanced live from
+relays (kind 0 profile, kind 10002 relay list):</p>
+
+<input id="in" value="82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2" spellcheck="false">
+<p id="meta">—</p>
+<pre id="out"></pre>
+
+<script type="module">
+  import { resolve, didFromPubkey } from './did.js'
+  import { decode } from 'https://nostr-client.github.io/nip19/nip19.js'
+  import { defaultPool } from 'https://nostr-client.github.io/pool/pool.js'
+
+  const input = document.getElementById('in')
+  const meta = document.getElementById('meta')
+  const out = document.getElementById('out')
+  let seq = 0
+
+  async function go() {
+    const mySeq = ++seq
+    let pubkey
+    try {
+      const raw = input.value.trim()
+      pubkey = raw.startsWith('did:nostr:') ? raw.slice(10) : decode(raw).hex
+    } catch (e) {
+      meta.textContent = '✗ ' + e.message
+      return
+    }
+    meta.textContent = 'resolving ' + didFromPubkey(pubkey) + ' …'
+    const { document: doc, profile, source } = await resolve(pubkey, { pool: defaultPool() })
+    if (mySeq !== seq) return
+    meta.textContent = 'source: ' + source + (profile?.name ? ' · profile: ' + profile.name : '')
+    out.textContent = JSON.stringify(doc, null, 2)
+  }
+  input.onchange = go
+  go()
+</script>
+</body>
+</html>
